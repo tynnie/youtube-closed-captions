@@ -25,6 +25,17 @@ To Use
    # YouTube uses "en","fr" not "en-US", "fr-FR"
    captions = download.get_captions(video_id, 'en')
 
+
+Output Data Type
+~~~~~~~~~~~~~~~~
+
+data with timestamp 
+
+* columns : ``start,end,text``
+* data type : ``Pandas DataFrame``
+
+
+
 Development
 ===========
 
