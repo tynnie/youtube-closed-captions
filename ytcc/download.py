@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import youtube_dl
 from pycaption import WebVTTReader
 from os import remove
+import pandas as pd
 import re
 from urllib.parse import urlencode
 from ytcc.storage import Storage
@@ -64,24 +65,39 @@ class Download():
     def get_captions_from_output(self, output: str, language: str = 'en') -> str:
         reader = WebVTTReader()
 
-        temp_final = ''
+        temp_final = []
         for caption in reader.read(output, language).get_captions(language):
-            stripped = self.remove_time_from_caption(
-                str(caption).replace(r'\n', "\n"))
-            temp_final += stripped
+            stripped = str(caption).split("\\n")[-1].replace("'", '')
+            timestamp = self.get_time_from_caption(
+                str(caption))
+            temp_final.append(",".join([timestamp[0],timestamp[1],stripped]))
+        
+        lst = [[],[],[]]
 
-        final = ''
-        previous = ''
-        for line in temp_final.split("\n"):
-            if previous != line:
-                final += "\n" + line
-            previous = line
+        for c in temp_final:
+            for item in range(len(c.split(","))):
+                lst[item].append(c.split(",")[item])
+        
+        df = pd.DataFrame({'start': lst[0],
+                             'end': lst[1],
+                             'content': lst[2]
+                            })
 
-        return final.replace("\n", ' ')[1:]
+        # final = ''
+        # previous = ''
+        # for line in temp_final.split("\n"):
+        #     if previous != line:
+        #         final += "," + line
+        #     previous = line
+        return df
+        # return final.replace("\n", ' ,')[1:]
 
     def remove_time_from_caption(self, caption: str) -> str:
         caption = caption[1:-1]
         return re.sub(r"^.*?\n", "\n", caption)
+    def get_time_from_caption(self, caption: str) -> str:
+        caption = caption[1:-1]
+        return re.findall(r"[0-9]*\:[0-9]*\:[0-9]*\.[0-9]*", caption)
 
 
 class DownloadException(Exception):
